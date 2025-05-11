@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Para mi Amor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: linear-gradient(to bottom, #1a1a2e, #16213e, #0f3460);
+      color: #fff;
+      font-family: 'Dancing Script', cursive;
+      height: 100vh;
+    }
+
+    #heart-container {
+      cursor: pointer;
+      position: absolute;
+      z-index: 3;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      transition: opacity 0.5s ease;
+    }
+
+    #heart {
+      width: 100px;
+      height: 90px;
+      position: relative;
+    }
+
+    #heart::before,
+    #heart::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      width: 52px;
+      height: 80px;
+      border-radius: 50px 50px 0 0;
+      background: #ff4d4d;
+      box-shadow: 0 0 15px rgba(255, 77, 77, 0.7);
+    }
+
+    #heart::before {
+      left: 50px;
+      transform: rotate(-45deg);
+      transform-origin: 0 100%;
+    }
+
+    #heart::after {
+      left: 0;
+      transform: rotate(45deg);
+      transform-origin: 100% 100%;
+    }
+
+    #canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 4;
+      display: none;
+    }
+
+    .container {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5; /* ← antes era 2 */
+  width: 40%;
+  text-align: center;
+}
+    .message {
+      opacity: 0;
+      transform: translateY(20px);
+      font-size: 2rem;
+      transition: opacity 2s ease, transform 2s ease;
+      text-shadow: 0 0 8px rgba(255, 105, 180, 0.9);
+    }
+
+    .date-counter {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      width: auto;
+      text-align: left;
+      opacity: 0;
+      transition: opacity 2s ease;
+      text-shadow: 0 0 5px rgba(255, 105, 180, 0.7);
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="heart-container">
+    <div id="heart"></div>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <div class="container">
+    <h1 class="message" id="message">Para el amor de mi vida</h1>
+  </div>
+  <div class="date-counter" id="date-counter"></div>
+
+  <audio id="click-sound" src="click.mp3.mp3" preload="auto"></audio>
+
+  <script>
+    const heartContainer = document.getElementById('heart-container');
+    const canvas = document.getElementById('canvas');
+    const message = document.getElementById('message');
+    const counter = document.getElementById('date-counter');
+    const clickSound = document.getElementById('click-sound');
+
+    heartContainer.addEventListener('click', () => {
+      clickSound.play();
+      heartContainer.style.opacity = '0';
+      setTimeout(() => {
+        heartContainer.style.display = 'none';
+        canvas.style.display = 'block';
+        init();
+      }, 500);
+    });
+
+    const startDate = new Date('2019-01-30');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      drawTree();
+    });
+
+    const branchColor = '#8B4513';
+    const heartColor = '#ff69b4';
+    const startX = canvas.width / 2;
+    const startY = canvas.height / 2 + 100;
+    const branches = [];
+    const leafHearts = [];
+    const fallingHearts = [];
+
+    function drawTree() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      branches.forEach(branch => {
+        ctx.beginPath();
+        ctx.moveTo(branch.startX, branch.startY);
+        ctx.lineTo(branch.endX, branch.endY);
+        ctx.strokeStyle = branchColor;
+        ctx.lineWidth = branch.width;
+        ctx.stroke();
+      });
+      leafHearts.forEach(heart => {
+        drawHeart(heart.x, heart.y, heart.size, heart.opacity);
+      });
+      fallingHearts.forEach((heart, index) => {
+        heart.y += heart.speed;
+        heart.opacity -= 0.003;
+        if (heart.y > canvas.height || heart.opacity <= 0) {
+          fallingHearts.splice(index, 1);
+        } else {
+          drawHeart(heart.x, heart.y, heart.size, heart.opacity);
+        }
+      });
+    }
+
+    function drawHeart(x, y, size, opacity) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(size, size);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(-2, -2, -4, 2, 0, 4);
+      ctx.bezierCurveTo(4, 2, 2, -2, 0, 0);
+      ctx.fillStyle = `rgba(255, 105, 180, ${opacity})`;
+      ctx.shadowColor = heartColor;
+      ctx.shadowBlur = 15;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function createBranch(startX, startY, endX, endY, width) {
+      return { startX, startY, endX, endY, width };
+    }
+
+    function generateTree(x, y, angle, depth, width) {
+      if (depth === 0) return;
+      const length = 20 + Math.random() * 10;
+      const endX = x + Math.cos(angle) * length * (depth / 2);
+      const endY = y + Math.sin(angle) * length * (depth / 2);
+      setTimeout(() => {
+        const branch = createBranch(x, y, endX, endY, width);
+        branches.push(branch);
+        if (depth <= 2) {
+          setTimeout(() => {
+            for (let i = 0; i < 3; i++) {
+              const heartX = endX + (Math.random() - 0.5) * 15;
+              const heartY = endY + (Math.random() - 0.5) * 15;
+              const heartSize = 0.6 + Math.random() * 0.3;
+              leafHearts.push({ x: heartX, y: heartY, size: heartSize, opacity: 0.1 });
+              let opacity = 0.1;
+              const heartInterval = setInterval(() => {
+                opacity += 0.05;
+                const heart = leafHearts.find(h => h.x === heartX && h.y === heartY);
+                if (heart) heart.opacity = Math.min(opacity, 0.95);
+                if (opacity >= 0.95) clearInterval(heartInterval);
+              }, 100);
+            }
+          }, 1000);
+        }
+        const branchCount = depth > 3 ? 3 : 2;
+        for (let i = 0; i < branchCount; i++) {
+          const newAngle = angle + (Math.random() - 0.5) * 1.5;
+          setTimeout(() => {
+            generateTree(endX, endY, newAngle, depth - 1, width * 0.7);
+          }, 300 + Math.random() * 200);
+        }
+      }, 300 + Math.random() * 200);
+    }
+
+    function createFallingHearts() {
+      if (leafHearts.length < 20) return;
+      leafHearts.forEach(leaf => {
+        if (Math.random() < 0.02) {
+          fallingHearts.push({
+            x: leaf.x,
+            y: leaf.y,
+            size: 0.5 + Math.random() * 0.4,
+            speed: 0.5 + Math.random() * 1.5,
+            opacity: 0.9
+          });
+        }
+      });
+    }
+
+    function calculateTimeElapsed(start, end) {
+      let years = end.getFullYear() - start.getFullYear();
+      let months = end.getMonth() - start.getMonth();
+      if (end.getDate() < start.getDate()) {
+        months--;
+      }
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
+      const interim = new Date(start);
+      interim.setFullYear(interim.getFullYear() + years);
+      interim.setMonth(interim.getMonth() + months);
+      const diff = end - interim;
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      return { years, months, days, hours, minutes, seconds };
+    }
+
+    function updateTimeCounter() {
+      const now = new Date();
+      const elapsed = calculateTimeElapsed(startDate, now);
+      counter.textContent = `Juntos por ${elapsed.years} años, ${elapsed.months} meses, ${elapsed.days} días, ${elapsed.hours} horas, ${elapsed.minutes} minutos y ${elapsed.seconds} segundos.`;
+      setTimeout(() => counter.style.opacity = '1', 3000);
+    }
+
+    function showMessage() {
+      const messages = [
+        ,
+        
+        "Este árbol que ves crecer frente a tus ojos es más que una animación",
+        "Es un reflejo de lo que siento por vos.",
+        "Cada rama representa un momento que vivimos juntos.",
+        "Así como este árbol, mi amor por vos se ramifica y se llena de hojas cada día.",
+        "Sus raíces se aferran a mi alma, sus ramas se extienden en cada recuerdo, y sus hojas florecen con cada gesto tuyo.",
+        "No hay tormenta que lo quiebre, ni invierno que lo detenga.te árbol florece como floreció mi vida desde que te conocí.",
+        "Cada hoja es un ‘te amo’, y nunca dejaran de brotar.",
+        "Nuestro amor empezó como una semilla... y hoy es un árbol que no deja de crecer.",
+        " Vos sos la luz que lo alimenta, el motivo de su existencia.",
+        "Así es mi amor por vos: constante, vivo, en crecimiento",
+        "Y así como este árbol sigue creciendo, también lo hará lo que siento por vos",
+        "Siempre.",
+        "Gracias por enseñarme a ser mejor",
+        "TE AMO MI BONITA",
+      ];
+      let currentIndex = 0;
+      setTimeout(() => {
+        message.style.opacity = '1';
+        message.style.transform = 'translateY(0)';
+      }, 1500);
+      setInterval(() => {
+        message.style.opacity = '0';
+        message.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+          currentIndex = (currentIndex + 1) % messages.length;
+          message.textContent = messages[currentIndex];
+          message.style.opacity = '1';
+          message.style.transform = 'translateY(0)';
+        }, 1000);
+      }, 4000);
+    }
+
+    function init() {
+      generateTree(startX, startY - 100, -Math.PI / 2, 6, 4);
+      function animate() {
+        drawTree();
+        createFallingHearts();
+        requestAnimationFrame(animate);
+      }
+      animate();
+      showMessage();
+      updateTimeCounter();
+      setInterval(updateTimeCounter, 1000);
+    }
+  </script>
+</body>
+</html>
