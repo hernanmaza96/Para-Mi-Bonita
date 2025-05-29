@@ -254,3 +254,15 @@ body::after {
 #canvas {
     z-index: 4;
 }
+
+@media (max-width: 600px) {
+  .message {
+    font-size: 1.2rem;
+    margin-bottom: 2rem; /* Separar del contador */
+  }
+
+  .date-counter {
+    font-size: 1rem;
+    margin-top: 1rem; /* Separar del texto personalizado */
+  }
+}
