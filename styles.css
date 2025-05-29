@@ -258,11 +258,17 @@ body::after {
 @media (max-width: 600px) {
   .message {
     font-size: 1.2rem;
-    margin-bottom: 2rem; /* Separar del contador */
+    margin-bottom: 3rem; /* Aumentar separación del contador */
+    text-align: center;
   }
 
   .date-counter {
     font-size: 1rem;
-    margin-top: 1rem; /* Separar del texto personalizado */
+    margin-top: 2rem; /* Aumentar separación del texto personalizado */
+    text-align: center;
+  }
+
+  .container {
+    padding: 1rem; /* Asegurar espacio interno en móviles */
   }
 }
