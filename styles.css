@@ -263,6 +263,10 @@ body::after {
   }
 
   .date-counter {
+    display: flex; /* Asegurar que los elementos estén en línea */
+    flex-direction: row; /* Alinear horizontalmente */
+    justify-content: center; /* Centrar horizontalmente */
+    align-items: center; /* Centrar verticalmente */
     font-size: 1rem;
     margin-top: 2rem; /* Aumentar separación del texto personalizado */
     text-align: center;
