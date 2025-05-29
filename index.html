@@ -76,7 +76,8 @@
     }
 
     #heart-container {
-      cursor: pointer;
+      /* cursor: pointer; */
+      cursor: default !important;
       position: absolute;
       z-index: 3;
       left: 50%;
@@ -131,12 +132,12 @@
     }
     .container {
       position: absolute;
-      top: 58%; /* Antes: 70%. Ahora más arriba, más cerca del árbol */
+      top: 58%; 
       left: 50%;
       transform: translate(-50%, -50%);
       z-index: 5;
       width: 90vw;
-      max-width: 700px;
+      max-width: 700px; 
       text-align: center;
       pointer-events: none;
     }
@@ -151,7 +152,7 @@
       color: #b83260;
       text-shadow: 0 2px 16px rgba(255, 105, 180, 0.25);
       transition: opacity 2s ease, transform 2s ease;
-      font-family: 'Quicksand', 'Cal Sans', Arial, sans-serif; /* Nueva tipografía */
+      font-family: 'Quicksand', 'Cal Sans', Arial, sans-serif; 
       font-weight: 600;
       letter-spacing: 1px;
       margin: 0 auto;
@@ -245,13 +246,11 @@
     const ctx = canvas.getContext('2d');
     let animationId, intervalId, counterId, messageId;
 
-    // --- NUEVO CONTROL DE FLUJO ---
 let treeFullyGrown = false;
 let heartsFullyShown = false;
 let showMessageTimeout;
-let heartsStartDelay = 5000; // Retraso de 5 segundos antes de que los corazones comiencen a caer
+let heartsStartDelay = 5000; 
 
-    // Responsive canvas
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -262,7 +261,6 @@ let heartsStartDelay = 5000; // Retraso de 5 segundos antes de que los corazones
       drawTree();
     });
 
-    // Árbol y corazones
     const branchColor = '#8B4513';
     const heartColor = '#ff69b4';
     let startX, startY;
@@ -270,7 +268,6 @@ let heartsStartDelay = 5000; // Retraso de 5 segundos antes de que los corazones
     let leafHearts = [];
     let fallingHearts = [];
 
-    // Fondo animado mejorado: partículas de diferentes tamaños, brillos y movimiento más fluido
 let bgParticles = Array.from({length: 40}, () => ({
   x: Math.random() * window.innerWidth,
   y: Math.random() * window.innerHeight,
@@ -283,8 +280,6 @@ let bgParticles = Array.from({length: 40}, () => ({
 function drawBackground() {
   ctx.save();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // Eliminar halo de luz ambiental
-  // Partículas con brillos y diferentes colores
   bgParticles.forEach(p => {
     ctx.save();
     ctx.beginPath();
@@ -303,7 +298,6 @@ function drawBackground() {
   ctx.restore();
 }
 
-// Sombra proyectada del árbol
 function drawShadow() {
   ctx.save();
   ctx.globalAlpha = 0.18;
@@ -338,11 +332,6 @@ function drawShadow() {
         grad.addColorStop(1, 'rgba(184, 50, 96, ' + (opacity * 0.7) + ")");
       }
       ctx.fillStyle = grad;
-      // Eliminar completamente el glow para que no haya resplandor exterior
-      // if (glow) {
-      //   ctx.shadowColor = colorized ? '#ff0077' : '#ffb6c1';
-      //   ctx.shadowBlur = colorized ? 32 : 25;
-      // }
       if (twinkle) {
         ctx.globalAlpha = opacity * (0.7 + 0.3 * Math.sin(Date.now() / 200 + x + y));
       }
@@ -350,7 +339,6 @@ function drawShadow() {
       ctx.restore();
     }
 
-    // Animación de ramas: dibujado progresivo
     let branchProgress = 0;
     function drawTree() {
       drawBackground();
@@ -378,7 +366,7 @@ function drawShadow() {
           ctx.restore();
         }
       }
-      // Mostrar corazones solo cuando el árbol está completamente formado
+      
       if (treeFullyGrown) {
         let allVisible = true;
         leafHearts.forEach((heart, i) => {
@@ -392,24 +380,107 @@ function drawShadow() {
         if (allVisible && !heartsFullyShown) {
           heartsFullyShown = true;
           setTimeout(() => {
-            createFallingHearts(); // Iniciar caída de corazones solo después de que todos sean visibles
+            createFallingHearts(); 
           }, 1000);
           showMessageTimeout = setTimeout(() => {
             showMessage();
-          }, 700);
+          }, 200); 
         }
       }
-      // Corazones que caen con leve brisa
+      
       if (heartsFullyShown) {
         for (let i = fallingHearts.length - 1; i >= 0; i--) {
           const heart = fallingHearts[i];
-          heart.y += heart.speed * 0.7; // Caída más lenta
-          heart.x += heart.drift + Math.sin(Date.now() / 400 + heart.x) * 0.1;
-          // Mantener SIEMPRE el mismo color y opacidad suave durante todo el trayecto
-          heart.opacity = 0.28; // Menos intensidad
-          // Eliminar cualquier cambio de color o intensidad
+          heart.y += heart.speed * 0.7; 
+          
+          const textAreaCenter = canvas.width / 2;
+          const textAreaWidth = Math.min(canvas.width * 0.90, 680); 
+          const maxOffset = textAreaWidth / 2;
+          const leftLimit = textAreaCenter - maxOffset;
+          const rightLimit = textAreaCenter + maxOffset;
+          
+          const centerProximity = 5; 
+          const REBOUND_DRIFT_MAGNITUDE = 1.5; 
+          const SINUSOIDAL_DAMPING_FACTOR = 0.3; 
+          const GENTLE_CENTERING_FACTOR = 0.002;
+
+          if (typeof heart.reboundState === 'undefined') {
+              heart.reboundState = 'normal'; 
+              heart.originalRandomDrift = heart.drift; 
+          }
+
+          let sinusoidalMovement = 
+              (Math.sin(Date.now() / 400 + heart.x * 0.5 + heart.y * 0.03) * 2.2 +
+               Math.cos(Date.now() / 900 + heart.y * 0.07) * 1.2 +
+               Math.sin(heart.y * 0.012 + heart.x * 0.008) * 0.7);
+
+          let currentAppliedDriftValue;
+          let applySinusoidalDamping = false;
+
+          if (heart.reboundState === 'normal') {
+              const distFromCenter = heart.x - textAreaCenter;
+              const gentleCenteringAdjustment = -distFromCenter * GENTLE_CENTERING_FACTOR;
+              currentAppliedDriftValue = heart.originalRandomDrift + gentleCenteringAdjustment;
+          } else {
+              applySinusoidalDamping = true;
+              if (heart.reboundState === 'to_center_from_left' || heart.reboundState === 'to_right_from_center') {
+                  currentAppliedDriftValue = REBOUND_DRIFT_MAGNITUDE;
+              } else { 
+                  currentAppliedDriftValue = -REBOUND_DRIFT_MAGNITUDE;
+              }
+          }
+
+          let actualSinusoidalMovement = sinusoidalMovement;
+          if (applySinusoidalDamping) {
+              actualSinusoidalMovement *= SINUSOIDAL_DAMPING_FACTOR;
+          }
+
+          heart.x += currentAppliedDriftValue * 0.7 + actualSinusoidalMovement;
+
+          // State transitions
+          if (heart.reboundState === 'normal') {
+              if (heart.x < leftLimit) {
+                  heart.x = leftLimit; heart.reboundState = 'to_center_from_left';
+              } else if (heart.x > rightLimit) {
+                  heart.x = rightLimit; heart.reboundState = 'to_center_from_right';
+              }
+          } else if (heart.reboundState === 'to_center_from_left') { 
+              if (heart.x >= textAreaCenter - centerProximity) {
+                  heart.x = textAreaCenter; heart.reboundState = 'to_left_from_center'; 
+              } else if (heart.x > rightLimit) { 
+                  heart.x = rightLimit; heart.reboundState = 'to_center_from_right';
+              } else if (heart.x < leftLimit) { 
+                  heart.x = leftLimit; 
+              }
+          } else if (heart.reboundState === 'to_center_from_right') { 
+              if (heart.x <= textAreaCenter + centerProximity) {
+                  heart.x = textAreaCenter; heart.reboundState = 'to_right_from_center'; 
+              } else if (heart.x < leftLimit) { 
+                  heart.x = leftLimit; heart.reboundState = 'to_center_from_left';
+              } else if (heart.x > rightLimit) { 
+                  heart.x = rightLimit;
+              }
+          } else if (heart.reboundState === 'to_left_from_center') { 
+              if (heart.x <= leftLimit) {
+                  heart.x = leftLimit; heart.reboundState = 'to_center_from_left'; 
+              } else if (heart.x > rightLimit) { 
+                  heart.x = rightLimit; heart.reboundState = 'to_center_from_right';
+              } else if (heart.x > textAreaCenter + centerProximity && currentAppliedDriftValue < 0) { 
+                  heart.x = textAreaCenter; heart.reboundState = 'to_right_from_center'; 
+              }
+          } else if (heart.reboundState === 'to_right_from_center') { 
+              if (heart.x >= rightLimit) {
+                  heart.x = rightLimit; heart.reboundState = 'to_center_from_right'; 
+              } else if (heart.x < leftLimit) { 
+                  heart.x = leftLimit; heart.reboundState = 'to_center_from_left';
+              } else if (heart.x < textAreaCenter - centerProximity && currentAppliedDriftValue > 0){ 
+                  heart.x = textAreaCenter; heart.reboundState = 'to_left_from_center'; 
+              }
+          }
+
+          heart.opacity = 0.28;
           heart.colorized = false;
-          if (heart.y > canvas.height || heart.opacity <= 0) {
+          if (heart.y > canvas.height || heart.opacity <= 0 ) {
             if (typeof heart.originIndex === 'number' && leafHearts[heart.originIndex]) {
               leafHearts[heart.originIndex].opacity = 0.95;
             }
@@ -419,50 +490,52 @@ function drawShadow() {
           }
         }
       }
-      // Generar corazones cayendo desde los lados del árbol
-      if (heartsFullyShown && fallingHearts.length < 20) {
+
+      // MODIFIED: Increased the limit for concurrently falling hearts
+      if (heartsFullyShown && fallingHearts.length < 35) { // Was 20, now 35
         const randomBranch = branches[Math.floor(Math.random() * branches.length)];
         if (randomBranch) {
-          const t = Math.random(); // Posición aleatoria en la rama
+          const t = Math.random(); 
           const heartX = randomBranch.startX + (randomBranch.endX - randomBranch.startX) * t;
           const heartY = randomBranch.startY + (randomBranch.endY - randomBranch.startY) * t;
           fallingHearts.push({
             x: heartX,
             y: heartY,
             size: 1.5 + Math.random() * 0.5,
-            speed: 1.1 + Math.random() * 0.3, // Velocidad más lenta
-            opacity: 0.28, // Menos intensidad
-            drift: (Math.random() - 0.5) * 2,
-            colorized: false // Nunca se usa
+            speed: 1.1 + Math.random() * 0.3, 
+            opacity: 0.28, 
+            drift: (Math.random() - 0.5) * 2, 
+            colorized: false 
+            // reboundState and originalRandomDrift will be initialized in the loop above
           });
         }
       }
-      // Asegurar que los corazones caigan sobre el texto personalizado
+      
       fallingHearts.forEach(heart => {
-        if (heart.y > canvas.height * 0.6) { // Ajustar la posición para que caigan sobre el texto
+        if (heart.y > canvas.height * 0.6) { 
           ctx.save();
           ctx.globalAlpha = heart.opacity;
           drawHeart(heart.x, heart.y, heart.size, heart.opacity, true, false, true, heart.colorized);
           ctx.restore();
         }
       });
-      // Mejorar el relleno del árbol con más detalles visuales
+      
       if (treeFullyGrown) {
         branches.forEach(branch => {
           if (branch.width > 1.5) {
             ctx.save();
             ctx.beginPath();
             ctx.arc(branch.endX, branch.endY, branch.width * 1.2, 0, 2 * Math.PI);
-            ctx.fillStyle = 'rgba(139,69,19,0.3)'; // Color marrón claro para un efecto de relleno
+            ctx.fillStyle = 'rgba(139,69,19,0.3)'; 
             ctx.fill();
             ctx.restore();
           }
         });
       }
-      // Detener el crecimiento de corazones una vez que todas las ramas estén llenas
+      
       if (heartsFullyShown) {
         leafHearts.forEach(heart => {
-          heart.opacity = Math.min(heart.opacity, 0.95); // Asegurar que no sigan creciendo
+          heart.opacity = Math.min(heart.opacity, 0.95); 
         });
       }
       if (branchProgress < 1) {
@@ -480,9 +553,8 @@ function drawShadow() {
 
     function generateTree(x, y, angle, depth, width) {
       if (depth === 0) return;
-      // Aumentar la separación angular y la longitud de las ramas para que no queden tan juntas
-      const baseLength = 28 + Math.random() * 12; // ramas más largas
-      const spread = (Math.PI / 3) * (1 - depth / 8); // mayor separación en bifurcaciones superiores
+      const baseLength = 28 + Math.random() * 12; 
+      const spread = (Math.PI / 3) * (1 - depth / 8); 
       const endX = x + Math.cos(angle) * baseLength * (depth / 2);
       const endY = y + Math.sin(angle) * baseLength * (depth / 2);
       setTimeout(() => {
@@ -490,10 +562,8 @@ function drawShadow() {
         branches.push(branch);
         if (depth <= 2) {
           setTimeout(() => {
-            // Distribuir corazones a lo largo de toda la rama, de base a punta
             const heartsCount = 18;
             for (let i = 0; i < heartsCount; i++) {
-              // t recorre de 0.08 a 0.95, con dispersión aleatoria
               let t = 0.08 + (0.87 * i) / (heartsCount - 1) + (Math.random() - 0.5) * 0.04;
               t = Math.max(0.05, Math.min(0.97, t));
               let angleOffset = (Math.random() - 0.5) * 14;
@@ -501,20 +571,11 @@ function drawShadow() {
               const heartY = y + (endY - y) * t + (Math.random() - 0.5) * 10;
               const heartSize = (0.5 + Math.random() * 0.4) * 2;
               leafHearts.push({ x: heartX, y: heartY, size: heartSize, opacity: 0.1 });
-              let opacity = 0.1;
-              const heartInterval = setInterval(() => {
-                opacity += 0.05;
-                const heart = leafHearts.find(h => h.x === heartX && h.y === heartY);
-                if (heart) heart.opacity = Math.min(opacity, 0.95);
-                if (opacity >= 0.95) clearInterval(heartInterval);
-              }, 100);
             }
           }, 1000);
         }
-        // Corazones en todas las ramas, no solo en las finas
-        if (depth <= 4) { // ramas finas, medias e intermedias
+        if (depth <= 4) { 
           setTimeout(() => {
-            // Distribuir corazones a lo largo de toda la rama
             const heartsCount = depth <= 2 ? 18 : (depth === 3 ? 12 : 8);
             for (let i = 0; i < heartsCount; i++) {
               let t = 0.08 + (0.87 * i) / (heartsCount - 1) + (Math.random() - 0.5) * 0.04;
@@ -524,20 +585,11 @@ function drawShadow() {
               const heartY = y + (endY - y) * t + (Math.random() - 0.5) * (depth === 4 ? 16 : 10);
               const heartSize = (0.5 + Math.random() * 0.4) * (depth === 4 ? 2.3 : 2);
               leafHearts.push({ x: heartX, y: heartY, size: heartSize, opacity: 0.1 });
-              let opacity = 0.1;
-              const heartInterval = setInterval(() => {
-                opacity += 0.05;
-                const heart = leafHearts.find(h => h.x === heartX && h.y === heartY);
-                if (heart) heart.opacity = Math.min(opacity, 0.95);
-                if (opacity >= 0.95) clearInterval(heartInterval);
-              }, 100);
             }
           }, 1000);
         }
-        // Separar más las ramas hijas
         const branchCount = depth > 3 ? 3 : 2;
         for (let i = 0; i < branchCount; i++) {
-          // Ángulo de bifurcación más amplio y menos aleatorio
           const angleOffset = spread * (i - (branchCount - 1) / 2);
           const newAngle = angle + angleOffset + (Math.random() - 0.5) * 0.25;
           setTimeout(() => {
@@ -547,25 +599,30 @@ function drawShadow() {
       }, 300 + Math.random() * 200);
     }
 
+    // This function is called once when the tree is fully grown to potentially convert some leafHearts to fallingHearts.
+    // The continuous generation of NEW falling hearts happens in drawTree().
     function createFallingHearts() {
       if (!heartsFullyShown) return;
-      if (leafHearts.length < 20) return;
-      // Menos corazones cayendo y más dispersos
+      if (leafHearts.length < 20) return; // Only if enough leaves exist
       leafHearts.forEach((leaf, i) => {
-        if (Math.random() < 0.0015) { // menos probabilidad que antes
-          const isLeftSide = leaf.x < canvas.width * 0.4; // Lado izquierdo del árbol
-          const isRightSide = leaf.x > canvas.width * 0.6; // Lado derecho del árbol
+        // Probability of a leaf heart detaching. This can be adjusted if you want more/less *initial* shedding.
+        // The main continuous flow of hearts comes from the generator in drawTree().
+        if (Math.random() < 0.0015) { 
+          const isLeftSide = leaf.x < canvas.width * 0.4; 
+          const isRightSide = leaf.x > canvas.width * 0.6; 
           if (isLeftSide || isRightSide) {
             fallingHearts.push({
               x: leaf.x,
               y: leaf.y,
               size: leaf.size * 1.2,
-              speed: 1.5 + Math.random() * 0.5, // Velocidad más rápida
+              speed: 1.5 + Math.random() * 0.5, 
               opacity: 0.38,
-              drift: 0,
-              originIndex: i,
+              drift: (Math.random() - 0.5) * 2, 
+              originIndex: i, // To make the original leaf heart disappear or fade
               colorized: false
             });
+            // Optionally, make the original leafHeart invisible or less opaque
+            // leaf.opacity = 0.1; // Or some other indication it has fallen
           }
         }
       });
@@ -592,7 +649,6 @@ function drawShadow() {
     days--;
   }
   if (days < 0) {
-    // Obtener el último día del mes anterior
     const prevMonth = new Date(end.getFullYear(), end.getMonth(), 0);
     days += prevMonth.getDate();
     months--;
@@ -612,7 +668,6 @@ function drawShadow() {
       setTimeout(() => counter.style.opacity = '1', 3000);
     }
 
-    // Animación de entrada para el mensaje
     function showMessage() {
       const messages = [
         "Este árbol que ves crecer frente a tus ojos es más que una animación",
@@ -622,52 +677,58 @@ function drawShadow() {
         "Sus raíces se aferran a mi alma, sus ramas se extienden en cada recuerdo, y sus hojas florecen con cada gesto tuyo.",
         "No hay tormenta que lo quiebre, ni invierno que lo detenga. Este árbol florece como floreció mi vida desde que te conocí.",
         "Cada hoja es un ‘te amo’, y nunca dejarán de brotar.",
-        "Nuestro amor empezó como una semilla... y hoy es un árbol que no deja de crecer.",
+        "Nuestro amor empezó como una semilla y hoy es un árbol que no deja de crecer.",
         "Vos sos la luz que lo alimenta, el motivo de su existencia.",
         "Así es mi amor por vos: constante, vivo, en crecimiento",
         "Y así como este árbol sigue creciendo, también lo hará lo que siento por vos",
         "Siempre.",
         "Gracias por enseñarme a ser mejor",
-        "TE AMO MI BONITA",
+        "TE AMO MI BONITA ❤️",
       ];
       let currentIndex = 0;
       message.textContent = '';
       message.style.opacity = '0';
       message.style.transform = 'translateY(20px) scale(0.96)';
-      message.style.transition = 'opacity 1.2s cubic-bezier(.4,2,.3,1), transform 1.2s cubic-bezier(.4,2,.3,1)';
-      // Letras una a una
+      message.style.transition = 'opacity 0.7s cubic-bezier(.4,2,.3,1), transform 0.7s cubic-bezier(.4,2,.3,1)';
       function typeMessage(text, cb) {
         let i = 0;
         message.textContent = '';
         function type() {
           if (i < text.length) {
             message.textContent += text[i++];
-            setTimeout(type, 22);
+            setTimeout(type, 16); 
           } else if (cb) {
             cb();
           }
         }
         type();
       }
-      // Animación igual para todos los mensajes, incluido el primero
       function showAndTypeMessage(idx) {
+        message.classList.remove('final');
         message.style.opacity = '0';
-        message.style.transform = 'translateY(20px) scale(0.96)';
+        message.style.transform = 'translateY(40px) scale(0.92) rotateX(40deg)';
+        message.style.filter = 'blur(6px) brightness(1.2)';
         setTimeout(() => {
           typeMessage(messages[idx], () => {
+            message.style.transition = 'opacity 1.1s cubic-bezier(.4,2,.3,1), transform 1.1s cubic-bezier(.4,2,.3,1), filter 1.1s cubic-bezier(.4,2,.3,1)';
             message.style.opacity = '1';
-            message.style.transform = 'translateY(0) scale(1.08)';
+            message.style.transform = 'translateY(0) scale(1.08) rotateX(0deg)';
+            message.style.filter = 'blur(0px) brightness(1.08)';
             setTimeout(() => {
               message.style.transform = 'translateY(0) scale(1)';
-            }, 1200);
+              message.style.filter = 'blur(0px) brightness(1)';
+              if (idx === messages.length - 1) {
+                message.classList.add('final');
+              }
+            }, 900);
           });
-        }, 700);
+        }, 350);
       }
       showAndTypeMessage(0);
       messageId = setInterval(() => {
         currentIndex = (currentIndex + 1) % messages.length;
         showAndTypeMessage(currentIndex);
-      }, 12000);
+      }, 9000); 
     }
 
     function init() {
@@ -675,7 +736,7 @@ function drawShadow() {
       startY = canvas.height / 2 + 100;
       branches = [];
       leafHearts = [];
-      fallingHearts = [];
+      fallingHearts = []; 
       branchProgress = 0;
       treeFullyGrown = false;
       heartsFullyShown = false;
@@ -685,7 +746,6 @@ function drawShadow() {
       generateTree(startX, startY - 100, -Math.PI / 2, 6, 4);
       function animate() {
         drawTree();
-        createFallingHearts();
         animationId = requestAnimationFrame(animate);
       }
       animate();
@@ -700,6 +760,13 @@ function drawShadow() {
       clearInterval(messageId);
       message.style.opacity = 0;
       message.style.transform = 'translateY(20px)';
+      fallingHearts = []; 
+      leafHearts.forEach(lh => { // Clear any pending opacity intervals from generateTree if they existed
+        if(lh.heartInterval) clearInterval(lh.heartInterval);
+      });
+      leafHearts = [];
+      branches = [];
+
       setTimeout(() => {
         heartContainer.style.opacity = '1';
         heartContainer.style.display = 'block';
@@ -719,7 +786,6 @@ function drawShadow() {
       }, 500);
     });
 
-    // Accesibilidad: activar con Enter o Espacio
     heartContainer.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         heartContainer.click();
