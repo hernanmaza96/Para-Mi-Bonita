@@ -1,0 +1,256 @@
+@import url('https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@600&display=swap');
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #87ceeb 0%, #98fb98 100%); /* Sky blue to soft green */
+    overflow: hidden;
+    margin: 0;
+    font-family: 'Parisienne', cursive;
+    position: relative;
+}
+
+/* Grass layer at the bottom */
+body::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    background: linear-gradient(to top, #2e7d32, #4caf50); /* Grass gradient */
+    z-index: 0;
+}
+
+body::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 80px;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><path d="M0,40 L10,20 A10,10 0 0,1 20,30 L30,20 A10,10 0 0,0 40,40 Z" fill="%2333a149"/></svg>') repeat-x bottom;
+    z-index: 1;
+}
+
+#heart-container {
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+    transition: opacity 0.5s ease;
+}
+
+#heart {
+    position: relative;
+    width: 100px;
+    height: 90px;
+    transition: transform 0.5s ease;
+}
+
+#heart::before,
+#heart::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 52px;
+    height: 80px;
+    border-radius: 50px 50px 0 0;
+    background: #ff4d4d;
+    box-shadow: 0 0 15px rgba(255, 77, 77, 0.7);
+}
+
+#heart::before {
+    left: 50px;
+    transform: rotate(-45deg);
+    transform-origin: 0 100%;
+}
+
+#heart::after {
+    left: 0;
+    transform: rotate(45deg);
+    transform-origin: 100% 100%;
+}
+
+#tree-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: none;
+    z-index: 1;
+}
+
+#tree {
+    position: relative;
+    width: 15px;
+    height: 200px;
+    background: linear-gradient(#6b4e31, #8b5a2b);
+    margin: 0 auto;
+    border-radius: 5px;
+    transform: scaleY(0);
+    transform-origin: bottom;
+    animation: growTree 1.5s ease forwards;
+    bottom: -80px; /* Align tree base with grass */
+}
+
+@keyframes growTree {
+    to {
+        transform: scaleY(1);
+    }
+}
+
+.branch {
+    position: absolute;
+    width: 2px;
+    height: 80px;
+    background: linear-gradient(#3c7f4b, #4a9b5e);
+    border-radius: 50%;
+    transform-origin: bottom left;
+    transform: scale(0);
+    animation: growBranch 1s ease forwards;
+}
+
+.branch:nth-child(1) {
+    top: 50px;
+    left: 7px;
+    transform: rotate(-40deg);
+    animation-delay: 1.5s;
+}
+
+.branch:nth-child(2) {
+    top: 80px;
+    left: 10px;
+    transform: rotate(30deg);
+    animation-delay: 1.7s;
+}
+
+.branch:nth-child(3) {
+    top: 120px;
+    left: 5px;
+    transform: rotate(-20deg);
+    animation-delay: 1.9s;
+}
+
+.branch:nth-child(4) {
+    top: 150px;
+    left: 8px;
+    transform: rotate(40deg);
+    animation-delay: 2.1s;
+}
+
+.branch:nth-child(5) {
+    top: 180px;
+    left: 6px;
+    transform: rotate(-30deg);
+    animation-delay: 2.3s;
+}
+
+@keyframes growBranch {
+    to {
+        transform: scale(1);
+    }
+}
+
+.heart-leaf {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: var(--heart-color);
+    transform: rotate(45deg);
+    opacity: 0;
+    animation: appearHeart 0.5s ease forwards;
+}
+
+.heart-leaf::before,
+.heart-leaf::after {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: var(--heart-color);
+    border-radius: 50%;
+}
+
+.heart-leaf::before {
+    top: -10px;
+    left: 0;
+}
+
+.heart-leaf::after {
+    top: 0;
+    left: -10px;
+}
+
+.heart-leaf.falling {
+    animation: appearHeart 0.5s ease forwards, fallHeart 6s linear infinite;
+    z-index: 10;
+    pointer-events: none;
+}
+
+@keyframes appearHeart {
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fallHeart {
+    0% {
+        transform: translateY(0) rotate(45deg) scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: translateY(50vh) rotate(225deg) scale(0.7);
+        opacity: 0.5;
+    }
+    100% {
+        transform: translateY(100vh) rotate(405deg) scale(0.4);
+        opacity: 0;
+    }
+}
+
+#message {
+    text-align: center;
+    display: none;
+    font-size: 28px;
+    color: #333;
+    position: absolute;
+    bottom: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.2);
+    z-index: 0;
+}
+
+#counter {
+    font-size: 20px;
+    margin-top: 15px;
+    color: #555;
+}
+
+.message {
+    font-size: 2.2rem;
+    padding: 1em 2em;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.13);
+    box-shadow: 0 4px 24px 0 rgba(184,50,96,0.09);
+    color: #b83260;
+    text-shadow: 0 2px 16px rgba(255, 105, 180, 0.25);
+}
+
+.container {
+    z-index: 5;
+}
+
+.date-counter {
+    z-index: 10;
+}
+
+#canvas {
+    z-index: 4;
+}
