@@ -15,17 +15,25 @@
     canvas.style.transform = `translate(${moveX}px, ${moveY}px)`;
   });
 
-  function drawHeart(x, y, size, color, opacity) {
+  function drawHeart(x, y, size, opacity, angle = 0) {
     ctx.save();
     ctx.translate(x, y);
-    ctx.scale(size * 2.5, size * 2.5);
+    ctx.rotate(angle);
+    ctx.scale(size, size);
     ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.bezierCurveTo(-2, -2, -4, 2, 0, 4);
     ctx.bezierCurveTo(4, 2, 2, -2, 0, 0);
-    ctx.fillStyle = color;
+    ctx.closePath();
     ctx.globalAlpha = opacity;
+    ctx.shadowColor = "#fff";
+    ctx.shadowBlur = 18;
+    ctx.fillStyle = "rgba(255, 80, 160, 0.97)";
     ctx.fill();
+    ctx.lineWidth = 0.18;
+    ctx.strokeStyle = "rgba(255,255,255,0.7)";
+    ctx.stroke();
+    ctx.globalAlpha = 1;
     ctx.restore();
   }
 
@@ -131,4 +139,40 @@
     setInterval(updateCounter, 1000);
     showSlowMessages();
   });
+
+  function createBranch(startX, startY, cp1X, cp1Y, cp2X, cp2Y, endX, endY, width) {
+    return { startX, startY, cp1X, cp1Y, cp2X, cp2Y, endX, endY, width };
+  }
+
+  // Suponiendo que tienes una referencia al árbol y al mensaje:
+  const tree = document.getElementById('tree');
+  const message = document.getElementById('message');
+
+  // Función para obtener el centro superior del árbol
+  function getTreeTopPosition() {
+    const rect = tree.getBoundingClientRect();
+    return {
+      x: rect.left + rect.width / 2,
+      y: rect.top
+    };
+  }
+
+  // Función para crear un corazón que cae desde el árbol
+  function createFallingHeart() {
+    const { x, y } = getTreeTopPosition();
+    const heart = document.createElement('div');
+    heart.className = 'heart-leaf falling';
+    heart.style.left = `${x - 10}px`; // Ajusta el -10 según el tamaño del corazón
+    heart.style.top = `${y}px`;
+    heart.style.setProperty('--heart-color', '#ff69b4');
+    document.body.appendChild(heart);
+
+    // Elimina el corazón cuando termina la animación
+    heart.addEventListener('animationend', () => {
+      heart.remove();
+    });
+  }
+
+  // Llama a esta función cada cierto tiempo para hacer caer corazones
+  setInterval(createFallingHeart, 1200);
 })();
